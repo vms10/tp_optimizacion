@@ -2,7 +2,7 @@ import jax.numpy as jnp
 from jax import grad, jit, vmap
 from jax import random
 from jax import nn
-
+#hola
 import matplotlib.pyplot as plt
 
 def pack_params(params):
