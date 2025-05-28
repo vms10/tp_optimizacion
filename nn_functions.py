@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-from jax import grad, jit, vmap
+from jax import grad, jit, vmap, hessian
 from jax import random
 from jax import nn
 #hola
@@ -93,6 +93,10 @@ def update_sgd(params, x, y, step, aux):
     params = params - step * grads
     return params, aux, grads
 
+@jit
+def compute_hessian(params, x, y):
+    return hessian(loss)(params, x, y)
+
 
 @jit
 def update_rmsprop(params, x, y, step_size, aux):
@@ -102,6 +106,24 @@ def update_rmsprop(params, x, y, step_size, aux):
     step_size = step_size / (jnp.sqrt(aux) + 1e-8)
     params = params - step_size * grads
     return params, aux
+
+
+@jit
+def update_adam(params, x, y, step_size, aux):
+    m, v, t = aux  # aux contiene: promedio (m), cuadrado (v), contador (t)
+    beta1 = 0.9
+    beta2 = 0.999
+    eps = 1e-8
+    grads = grad(loss)(params, x, y)
+    m = beta1 * m + (1 - beta1) * grads
+    v = beta2 * v + (1 - beta2) * jnp.square(grads)
+    t = t + 1
+    m_hat = m / (1 - beta1 ** t)
+    v_hat = v / (1 - beta2 ** t)
+    params = params - step_size * m_hat / (jnp.sqrt(v_hat) + eps)
+
+    return params, (m, v, t),  grads
+
 
 
 def get_batches(x, y, bs):
